@@ -4,8 +4,8 @@ Arduino (Actually NodeMCU\ESP8266) powered Sous Vide controller project. Use wha
 
 ## Features
 + Wifi controlled. 
-++ Access point and client.
-++ Use AP to set up client.
+  + Access point and client.
+  + Use AP to set up client.
 + LEDs to indicate status of wifi AP, client and 110v relay.
 + Uses EEPROM to store settings.
 + Other stuff, maybe.
