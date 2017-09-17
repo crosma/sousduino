@@ -41,7 +41,7 @@ public:
 	LED *ap_led = new LED(Pins::AP_LED);
 	LED *client_led = new LED(Pins::Client_LED);
 
-	Temperature *temperature = new Temperature(Pins::OneWireBus);
+	//Temperature *temperature = new Temperature(Pins::OneWireBus);
 
 };
 

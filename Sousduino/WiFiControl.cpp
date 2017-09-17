@@ -23,7 +23,7 @@ void WiFiEvent(WiFiEvent_t event) {
 		break;
 
 	default:
-		Serial.printf("[Unhandled WiFi-event] event: %d\n", event);
+		//Serial.printf("[Unhandled WiFi-event] event: %d\n", event);
 		break;
 	}
 }

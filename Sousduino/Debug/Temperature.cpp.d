@@ -36,4 +36,5 @@ C:\Users\vbasp\AppData\Local\Temp\VMBuilds\Sousduino\esp8266_nodemcuv2\Debug\Tem
  C:\Users\vbasp\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\variants\nodemcu/../generic/common.h \
  C:\Users\vbasp\Dropbox\arduino\libraries\OneWire/OneWire.h \
  C:\Users\vbasp\Dropbox\arduino\libraries\DallasTemperature/DallasTemperature.h \
- C:\Users\vbasp\AppData\Local\Temp\VMBuilds\Sousduino\esp8266_nodemcuv2\Debug\Pins.h
+ C:\Users\vbasp\AppData\Local\Temp\VMBuilds\Sousduino\esp8266_nodemcuv2\Debug\Pins.h \
+ C:\Users\vbasp\AppData\Local\Temp\VMBuilds\Sousduino\esp8266_nodemcuv2\Debug\Shit.h

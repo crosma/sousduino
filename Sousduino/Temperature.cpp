@@ -9,12 +9,17 @@
 #include <string>
 #include <iomanip> // setprecision
 #include <sstream> // stringstream
+#include "Shit.h"
 
 using namespace std;
 
 Temperature::Temperature(Pins bus_id) {
-	OneWire *oneWire = new OneWire(bus_id);
-	DS18B20 = DallasTemperature(oneWire);
+	shit("Init Temperature");
+
+	OneWire oneWire(bus_id);
+	DS18B20 = DallasTemperature(&oneWire);
+
+	DS18B20.begin();
 
 	updateTemperature();
 }
@@ -26,13 +31,25 @@ Temperature::~Temperature() {
 float Temperature::updateTemperature() {
 	float temp;
 
-	do {
+	//do {
+		shit("Before requestTemperatures");
+
 		DS18B20.requestTemperatures();
-		temp = DS18B20.getTempFByIndex(0);
-		if (temp == 85.0 || temp == (-127.0)) delay(100);
-	} while (temp == 85.0 || temp == (-127.0));
+
+		shit("Before getTempFByIndex");
+
+		temp = DS18B20.getTempCByIndex(0);
+
+		//if (temp == 85.0 || temp == (-127.0)) delay(100);
+
+	//} while (temp == 85.0 || temp == (-127.0));
+
+	shit("Temperature for the device 1 (index 0) is: ", false);
+	Serial.println(temp);
 
 	lastTemperature = temp;
+
+	shit("After temp");
 
 	return temp;
 }
