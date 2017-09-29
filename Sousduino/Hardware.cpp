@@ -10,6 +10,6 @@ Hardware::Hardware()
 
 void Hardware::blink_leds()
 {
-	ap_led->do_blink();
-	client_led->do_blink();
+	led_ap->do_blink();
+	led_client->do_blink();
 }

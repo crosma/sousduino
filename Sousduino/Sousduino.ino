@@ -1,3 +1,4 @@
+#include "Relay.h"
 #include <Arduino.h>
 #include <ESP8266WebServer.h>
 #include <string.h>
@@ -5,6 +6,9 @@
 #include <Ticker.h>
 #include <OneWire.h>
 #include <RTClib.h>
+#include <ArduinoJson.h>
+
+
 
 #include "Pins.h"
 #include "Shit.h"
@@ -15,8 +19,6 @@
 #include "Hardware.h"
 
 
-
-//TRY new one wire library, its in examples -- it might be faster
 //JSON https://bblanchon.github.io/ArduinoJson/doc/
 //Settings storage example Examples -> ESP8266 -> ConfigFile
 //Checkout the wifi event handler to keep track of wifi connection
@@ -25,6 +27,7 @@
 When in AP mode, turn on red light.
 When connected to WIFI turn on green light.
 When trying WIFI client either blink green light or turn both on?
+
 Store network info and reconnect at setup if possible.
 When client fails, log it and show the user when they connect to AP
 Allow the user to set a static IP? Prefill box with "192.168.1.121"
@@ -32,8 +35,6 @@ Turn off AP when station is connected? If so, provide a reset button.
 */
 
 RTC_DS3231 rtc;
-
-ESP8266WebServer server(80);
 
 //Stuff
 Config *config;
@@ -44,18 +45,6 @@ WiFiControl *wifiControl;
 Ticker ticker_temperatures;
 Ticker ticker_blink_leds;
 
-
-// Data wire is plugged into port 2 on the Arduino
-#define ONE_WIRE_BUS D4
-
-// Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
-OneWire oneWire(ONE_WIRE_BUS);
-
-// Pass our oneWire reference to Dallas Temperature. 
-DallasTemperature sensors(&oneWire);
-
-
-
 void update_temperature() {
 	//hardware->temperature->updateTemperature();
 }
@@ -64,11 +53,133 @@ void blink_leds() {
 	hardware->blink_leds();
 }
 
+
+unsigned long last_millis_sleep = millis();
+unsigned long last_temp_check = 0;
+
+void sleep(unsigned long duration)
+{
+	unsigned long mil_new = millis();
+	long since = (long)mil_new - (long)last_millis_sleep;
+
+	if (since < duration) {
+		delay(duration - since);
+	}
+
+	last_millis_sleep = millis();
+}
+
+String getHeader()
+{
+	return
+		"<!doctype html>\n"
+		"<html>\n"
+		"<head>\n"
+		"	<title>Kombucha</title>\n"
+		"	<style>body {font-size: 20px;}</style>\n"
+		//"	<meta http-equiv=\"refresh\" content=\"10\" >";
+		"</head>\n"
+		"<body>\n\n"
+		;
+}
+
+String getFooter()
+{
+	return
+		"\n\n</body>\n"
+		"</html>\n"
+		;
+}
+
+String getRoot()
+{
+	String html = getHeader();
+
+	html += "Cabinet Temperature: <b>";
+	html += hardware->temperature->getLastTemperature();
+	html += "F</b><br>";
+
+	html += "Relay: <b>";
+	html += hardware->relay1->is_on() ? "On" : "Off";
+	html += "</b><br>";
+
+	html += "<br>";
+	html += "<br>";
+	html += "IP Address: ";
+	html += WiFi.localIP().toString();
+
+	html += "<br>";
+	html += "<br>";
+	html += "<input type=\"button\" value=\"Refresh Page\" onClick=\"window.location.reload()\">";
+
+	
+
+	html += getFooter();
+
+	return html;
+}
+
+void handleRoot()
+{
+	shit("Serving Root");
+
+	hardware->server.send(200, "text/html", getRoot());
+}
+
+//https://github.com/bblanchon/ArduinoJson
+void handleJSON()
+{
+	StaticJsonBuffer<200> jsonBuffer;
+
+	JsonObject& root = jsonBuffer.createObject();
+	root["temperature"] = hardware->temperature->getLastTemperature();
+	root["relay"] = hardware->relay1->is_on();
+
+	String output;
+	root.printTo(output);
+
+	shit(output.c_str());
+
+	hardware->server.send(200, "text/json", output);
+}
+
+void handleNotFound()
+{
+	String message = "File Not Found\n\n";
+	message += "URI: ";
+	message += hardware->server.uri();
+	message += "\nMethod: ";
+	message += (hardware->server.method() == HTTP_GET) ? "GET" : "POST";
+	message += "\nArguments: ";
+	message += hardware->server.args();
+	message += "\n";
+
+	for (uint8_t i = 0; i<hardware->server.args(); i++) {
+		message += " " + hardware->server.argName(i) + ": " + hardware->server.arg(i) + "\n";
+	}
+
+	hardware->server.send(404, "text/plain", message);
+}
+
+
+void setupWebServer()
+{
+	hardware->server = ESP8266WebServer(80);
+
+	hardware->server.on("/", handleRoot);
+	hardware->server.on("/json", handleJSON);
+
+	hardware->server.onNotFound(handleNotFound);
+
+	hardware->server.begin();
+
+	shit("HTTP server set up");
+}
+
 void setup()
 {
-	delay(1000); // wait for console opening
-
-				 //Start the Serial Port
+	//Start the Serial Port
+	delay(1000);
 	Serial.begin(115200);
 	shit("Starting up");
 
@@ -77,93 +188,36 @@ void setup()
 	wifiControl = WiFiControl::getInstance();
 
 	//Start the tickers
-	ticker_temperatures.attach(1, update_temperature);
-	ticker_blink_leds.attach(0.75, blink_leds);
+	//ticker_temperatures.attach(1, update_temperature);
+	ticker_blink_leds.attach(0.75, blink_leds); 
 
-	sensors.begin();
+	setupWebServer();
+
+	hardware->led_boot->on();
 }
+
 
 void loop()
 {
-	//shit("Loop");
+	if (millis() - last_temp_check > 3000) {
+		hardware->temperature->updateTemperature();
+		float temp = hardware->temperature->getLastTemperature();
 
-	//shit(hardware->temperature->getTemperatureString());
+		if (temp > config->goal_temp + config->threshold) {
+			hardware->relay1->off();
+			hardware->led_relay1->off();
+		}
+		else if (temp < config->goal_temp - config->threshold) {
+			hardware->relay1->on();
+			hardware->led_relay1->on();
+		}
 
-	delay(1000);
+		shit("Current temperature: ", false);
+		Serial.print(temp);
+		Serial.println(hardware->relay1->is_on() ? " (ON)" : " (OFF)");
 
-	//hardware->temperature->updateTemperature();
+		last_temp_check = millis();
+	}
 
-	// call sensors.requestTemperatures() to issue a global temperature 
-	// request to all devices on the bus
-	Serial.print("Requesting temperatures...");
-	sensors.requestTemperatures(); // Send the command to get temperatures
-	Serial.println("DONE");
-	// After we got the temperatures, we can print them here.
-	// We use the function ByIndex, and as an example get the temperature from the first sensor only.
-	Serial.print("Temperature for the device 1 (index 0) is: ");
-	Serial.println(sensors.getTempFByIndex(0));
+	hardware->server.handleClient();
 }
-
-
-
-/*
-void init_web_server() {
-MDNS.begin(ap_ssid);
-
-server.on("/", handleRoot);
-server.on("/inline", []() {
-server.send(200, "text/plain", "this works as well");
-});
-
-
-httpUpdater.setup(&server);
-server.onNotFound(handleNotFound);
-
-server.begin();
-
-MDNS.addService("http", "tcp", 80);
-Serial.printf("HTTPUpdateServer ready! Open http://%s.local/update in your browser\n", ap_ssid);
-}
-
-
-void handleRoot() {
-server.send(200, "text/html",
-"<!doctype html>\
-<html>\
-<head>\
-<meta charset=utf-8>\
-<title>Sousduino</title>\
-<base href=/>\
-<meta name=viewport content=width=device-width, initial-scale=1>\
-<link rel=icon type=image/x-icon href=favicon.ico>\
-</head>\
-<body>\
-<app-root>Loading...</app-root>\
-<script type=text/javascript src=http://localhost:4200/inline.bundle.js></script>\
-<script type=text/javascript src=http://localhost:4200/polyfills.bundle.js></script>\
-<script type=text/javascript src=http://localhost:4200/styles.bundle.js></script>\
-<script type=text/javascript src=http://localhost:4200/vendor.bundle.js></script>\
-<script type=text/javascript src=http://localhost:4200/main.bundle.js></script>\
-</body></html>"
-);
-}
-
-
-void handleNotFound() {
-String message = "File Not Found\n\n";
-message += "URI: ";
-message += server.uri();
-message += "\nMethod: ";
-message += (server.method() == HTTP_GET) ? "GET" : "POST";
-message += "\nArguments: ";
-message += server.args();
-message += "\n";
-
-for (uint8_t i = 0; i < server.args(); i++) {
-message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
-}
-
-server.send(404, "text/plain", message);
-}
-
-*/

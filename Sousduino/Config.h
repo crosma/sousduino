@@ -42,6 +42,13 @@ public:
 	char *ap_password = "password";
 	IPAddress ap_gateway = IPAddress(192, 168, 1, 1);
 	IPAddress ap_netmask = IPAddress(255, 255, 255, 0);
+
+	IPAddress ip_address = IPAddress(192, 168, 1, 250);
+
+	char *mDNSName = "kombucha";
+
+	float goal_temp = 80;
+	float threshold = 1;
 };
 
 

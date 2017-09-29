@@ -24,6 +24,8 @@ class WiFiControl
 	void client_connected();
 	void client_disconnected();
 
+	bool client_is_connected = false;
+
 protected:
 
 

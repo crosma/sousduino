@@ -10,14 +10,15 @@
 #include <iomanip> // setprecision
 #include <sstream> // stringstream
 #include "Shit.h"
+#include "Hardware.h"
 
 using namespace std;
 
 Temperature::Temperature(Pins bus_id) {
 	shit("Init Temperature");
 
-	OneWire oneWire(bus_id);
-	DS18B20 = DallasTemperature(&oneWire);
+	oneWire = new OneWire(bus_id);
+	DS18B20 = DallasTemperature(oneWire);
 
 	DS18B20.begin();
 
@@ -31,25 +32,29 @@ Temperature::~Temperature() {
 float Temperature::updateTemperature() {
 	float temp;
 
-	//do {
-		shit("Before requestTemperatures");
-
+	do {
 		DS18B20.requestTemperatures();
-
-		shit("Before getTempFByIndex");
-
 		temp = DS18B20.getTempCByIndex(0);
 
-		//if (temp == 85.0 || temp == (-127.0)) delay(100);
+		if (temp == 85.0 || temp == (-127.0)) {
+			shit("Invalid result from DS18B20: ", false);
+			Serial.print(temp);
+			Serial.println("C");
+			
+			Hardware *hardware = Hardware::getInstance();
+			hardware->relay1->off();
+			hardware->relay2->off();
 
-	//} while (temp == 85.0 || temp == (-127.0));
+			//TODO: Blink RELAY LEDS
 
-	shit("Temperature for the device 1 (index 0) is: ", false);
-	Serial.println(temp);
+			delay(100);
+		}
+	} while (temp == 85.0 || temp == (-127.0));
 
-	lastTemperature = temp;
+	//shit("Temperature for the device 1 (index 0) is: ", false);
+	//Serial.println(temp);
 
-	shit("After temp");
+	lastTemperature = DS18B20.getTempFByIndex(0);
 
 	return temp;
 }

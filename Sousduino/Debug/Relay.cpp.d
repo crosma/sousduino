@@ -1,7 +1,7 @@
-C:\Users\vbasp\AppData\Local\Temp\VMBuilds\Sousduino\esp8266_nodemcuv2\Debug\LED.cpp.o: \
- C:\Users\vbasp\AppData\Local\Temp\VMBuilds\Sousduino\esp8266_nodemcuv2\Debug\LED.cpp \
- C:\Users\vbasp\AppData\Local\Temp\VMBuilds\Sousduino\esp8266_nodemcuv2\Debug\LED.h \
- C:\Users\vbasp\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/arduino.h \
+C:\Users\vbasp\AppData\Local\Temp\VMBuilds\Sousduino\esp8266_nodemcuv2\Debug\Relay.cpp.o: \
+ C:\Users\vbasp\AppData\Local\Temp\VMBuilds\Sousduino\esp8266_nodemcuv2\Debug\Relay.cpp \
+ C:\Users\vbasp\AppData\Local\Temp\VMBuilds\Sousduino\esp8266_nodemcuv2\Debug\Relay.h \
+ C:\Users\vbasp\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/Arduino.h \
  C:\Users\vbasp\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/stdlib_noniso.h \
  C:\Users\vbasp\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/binary.h \
  C:\Users\vbasp\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/esp8266_peri.h \
@@ -24,7 +24,6 @@ C:\Users\vbasp\AppData\Local\Temp\VMBuilds\Sousduino\esp8266_nodemcuv2\Debug\LED
  C:\Users\vbasp\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/Printable.h \
  C:\Users\vbasp\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/uart.h \
  C:\Users\vbasp\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/Esp.h \
- C:\Users\vbasp\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/Arduino.h \
  C:\Users\vbasp\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/Updater.h \
  C:\Users\vbasp\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/flash_utils.h \
  C:\Users\vbasp\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/MD5Builder.h \
@@ -35,4 +34,4 @@ C:\Users\vbasp\AppData\Local\Temp\VMBuilds\Sousduino\esp8266_nodemcuv2\Debug\LED
  C:\Users\vbasp\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\variants\nodemcu/pins_arduino.h \
  C:\Users\vbasp\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\variants\nodemcu/../generic/common.h \
  C:\Users\vbasp\AppData\Local\Temp\VMBuilds\Sousduino\esp8266_nodemcuv2\Debug\Pins.h \
- C:\Users\vbasp\AppData\Local\Temp\VMBuilds\Sousduino\esp8266_nodemcuv2\Debug\Shit.h
+ C:\Users\vbasp\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/arduino.h

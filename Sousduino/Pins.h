@@ -13,12 +13,15 @@ enum Pins
 {
 	OneWireBus = D4,
 
-	Relay1 = 10,
-	Relay2 = 11,
+	Relay1 = 5,
+	Relay2 = 4,
 
-	AP_LED = 4,
-	Client_LED = 5,
-	Built_In_LED = 16,
+	LED_Boot = 14,
+	LED_Client = 12,
+	LED_Relay1 = 13,
+
+	LED_AP = 16,
+	LED_Built_In = 16,
 };
 
 #endif

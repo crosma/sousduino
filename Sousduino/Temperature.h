@@ -17,7 +17,9 @@
 using namespace std;
 
 class Temperature {
+	OneWire *oneWire;
 	DallasTemperature DS18B20;
+
 	float lastTemperature = 0;
 
 public:
