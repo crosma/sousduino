@@ -24,6 +24,7 @@ class WiFiControl
 	void client_connected();
 	void client_disconnected();
 
+	bool client_is_connecting = false;
 	bool client_is_connected = false;
 
 protected:
@@ -44,6 +45,8 @@ public:
 	}
 
 	friend void WiFiEvent(WiFiEvent_t event);
+
+	void client_check_connection();
 };
 
 

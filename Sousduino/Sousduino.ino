@@ -7,7 +7,7 @@
 #include <OneWire.h>
 #include <RTClib.h>
 #include <ArduinoJson.h>
-
+#include <FS.h>
 
 
 #include "Pins.h"
@@ -45,6 +45,9 @@ WiFiControl *wifiControl;
 Ticker ticker_temperatures;
 Ticker ticker_blink_leds;
 
+float desired_temperature = 100;
+
+
 void update_temperature() {
 	//hardware->temperature->updateTemperature();
 }
@@ -75,11 +78,13 @@ String getHeader()
 		"<!doctype html>\n"
 		"<html>\n"
 		"<head>\n"
-		"	<title>Kombucha</title>\n"
-		"	<style>body {font-size: 20px;}</style>\n"
-		//"	<meta http-equiv=\"refresh\" content=\"10\" >";
+		"	<title>Steak-o-tron</title>\n"
+		//"	<meta http-equiv=\"refresh\" content=\"15\" >";
+		"	<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n"
+		"	<script src=\"https://code.jquery.com/jquery-3.3.1.js\" integrity=\"sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=\" crossorigin=\"anonymous\"></script>\n"
+		"	<script src=\"/sousduino.js\"></script>\n"
 		"</head>\n"
-		"<body>\n\n"
+		"<body>\n"
 		;
 }
 
@@ -95,21 +100,30 @@ String getRoot()
 {
 	String html = getHeader();
 
-	html += "Cabinet Temperature: <b>";
+	html += "<label for=\"text\">Desired Temperature:</label>";
+	html += "<form action=\"/set\" method=\"POST\">";
+	html += "<input type=\"text\" name=\"temp\" value=\"";
+	html += desired_temperature;
+	html += "\" style=\"font-weight: bold;\">";
+	html += "&nbsp;&nbsp;<input type=\"submit\" value=\"Update\">";
+	html += "</form>";
+
+	html += "<label>Water Temperature:</label>";
 	html += hardware->temperature->getLastTemperature();
-	html += "F</b><br>";
+	html += "F<br>";
 
-	html += "Relay: <b>";
+	html += "<label>Relay:</label>";
 	html += hardware->relay1->is_on() ? "On" : "Off";
-	html += "</b><br>";
+	html += "<br>";
 
 	html += "<br>";
 	html += "<br>";
-	html += "IP Address: ";
+	html += "<label>IP Address:</label>";
 	html += WiFi.localIP().toString();
 
 	html += "<br>";
 	html += "<br>";
+
 	html += "<input type=\"button\" value=\"Refresh Page\" onClick=\"window.location.reload()\">";
 
 	
@@ -125,6 +139,33 @@ void handleRoot()
 
 	hardware->server.send(200, "text/html", getRoot());
 }
+
+
+void handleSet()
+{
+	shit("Serving Set");
+
+	String html = getHeader();
+
+	String temp = "Not Set";
+
+	if (hardware->server.hasArg("temp")) {
+		temp = hardware->server.arg("temp");
+	}
+
+	StaticJsonBuffer<200> jsonBuffer;
+
+	JsonObject& root = jsonBuffer.createObject();
+	root["temp"] = temp;
+
+	String output;
+	root.printTo(output);
+
+	shit(output.c_str());
+
+	hardware->server.send(200, "text/json", output);
+}
+
 
 //https://github.com/bblanchon/ArduinoJson
 void handleJSON()
@@ -143,22 +184,49 @@ void handleJSON()
 	hardware->server.send(200, "text/json", output);
 }
 
+
+String getContentType(String filename)
+{
+	if (filename.endsWith(".css")) return "text/css";
+	else if (filename.endsWith(".js")) return "application/javascript";
+	else if (filename.endsWith(".png")) return "image/png";
+	else if (filename.endsWith(".gif")) return "image/gif";
+	else if (filename.endsWith(".jpg")) return "image/jpeg";
+	else if (filename.endsWith(".htm")) return "text/html";
+	else if (filename.endsWith(".html")) return "text/html";
+	else if (filename.endsWith(".ico")) return "image/x-icon";
+	else if (filename.endsWith(".xml")) return "text/xml";
+	else if (filename.endsWith(".pdf")) return "application/x-pdf";
+	else if (filename.endsWith(".zip")) return "application/x-zip";
+	else if (filename.endsWith(".gz")) return "application/x-gzip";
+	return "text/plain";
+}
+
+
 void handleNotFound()
 {
-	String message = "File Not Found\n\n";
-	message += "URI: ";
-	message += hardware->server.uri();
-	message += "\nMethod: ";
-	message += (hardware->server.method() == HTTP_GET) ? "GET" : "POST";
-	message += "\nArguments: ";
-	message += hardware->server.args();
-	message += "\n";
-
-	for (uint8_t i = 0; i<hardware->server.args(); i++) {
-		message += " " + hardware->server.argName(i) + ": " + hardware->server.arg(i) + "\n";
+	if (SPIFFS.exists(hardware->server.uri())) {
+		File file = SPIFFS.open(hardware->server.uri(), "r");
+		size_t sent = hardware->server.streamFile(file, getContentType(hardware->server.uri()));
+		file.close();
 	}
+	else {
 
-	hardware->server.send(404, "text/plain", message);
+		String message = "File Not Found\n\n";
+		message += "URI: ";
+		message += hardware->server.uri();
+		message += "\nMethod: ";
+		message += (hardware->server.method() == HTTP_GET) ? "GET" : "POST";
+		message += "\nArguments: ";
+		message += hardware->server.args();
+		message += "\n";
+
+		for (uint8_t i = 0; i < hardware->server.args(); i++) {
+			message += " " + hardware->server.argName(i) + ": " + hardware->server.arg(i) + "\n";
+		}
+
+		hardware->server.send(404, "text/plain", message);
+	}
 }
 
 
@@ -168,6 +236,10 @@ void setupWebServer()
 
 	hardware->server.on("/", handleRoot);
 	hardware->server.on("/json", handleJSON);
+	hardware->server.on("/set", handleSet);
+
+	//hardware->server.serveStatic("/style.css", SPIFFS, "/style.css");
+	//hardware->server.serveStatic("/sousduino.js", SPIFFS, "/sousduino.js");
 
 	hardware->server.onNotFound(handleNotFound);
 
@@ -194,6 +266,8 @@ void setup()
 	setupWebServer();
 
 	hardware->led_boot->on();
+
+	SPIFFS.begin(); //TODO: Move SPIFFS to hardware?
 }
 
 

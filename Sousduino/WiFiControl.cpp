@@ -114,6 +114,7 @@ bool WiFiControl::init_client()
 	Config *config = Config::getInstance();
 	Hardware *hardware = Hardware::getInstance();
 
+	client_is_connecting = true;
 	client_is_connected = false;
 
 	WiFi.disconnect(true); //make sure the old config is gone
@@ -141,12 +142,13 @@ void WiFiControl::client_connected()
 	Config *config = Config::getInstance();
 	Hardware *hardware = Hardware::getInstance();
 
+	client_is_connecting = false;
+	client_is_connected = true;
+
 	shit("WiFi connected @ http://", false);
 	Serial.println(WiFi.localIP());
 
 	hardware->led_client->on();
-
-	client_is_connected = true;
 
 	hardware->server.stop();
 	hardware->server.begin();
@@ -164,6 +166,9 @@ void WiFiControl::client_disconnected()
 {
 	if (!client_is_connected) return;
 
+	client_is_connecting = false;
+	client_is_connected = false;
+
 	Hardware *hardware = Hardware::getInstance();
 
 	shit("WiFi lost connection");
@@ -171,5 +176,12 @@ void WiFiControl::client_disconnected()
 	hardware->led_client->off();
 
 	this->init_client();
+}
+
+void WiFiControl::client_check_connection()
+{
+	if (!WiFi.isConnected() && !client_is_connecting) {
+		init_client();
+	}
 }
 
